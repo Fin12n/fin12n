@@ -1,0 +1,4 @@
+- 👋 Hi, I’m @Fin12n
+- 👀 I’m interested in Roblox 
+- 🌱 I’m currently learning Luau code
+- ⚡ Fun fact: Im a Roblox Player but Im BAD...
