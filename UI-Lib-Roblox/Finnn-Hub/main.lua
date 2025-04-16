@@ -5,6 +5,10 @@ local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
+-- Keep track of active notifications
+local ActiveNotifications = {}
+local NotificationPadding = 10 -- Space between notifications
+
 -- Tween Configuration
 local function CreateTween(instance, properties, duration, easingStyle, easingDirection)
     local tweenInfo = TweenInfo.new(
@@ -98,6 +102,35 @@ function FinnnHub:CreateWindow(config)
     BackgroundIn.Position = UDim2.new(0.222, 0, 0.15, 0)
     BackgroundIn.Size = UDim2.new(0, 380, 0, 247)
     
+    -- Create ScrollingFrame inside BackgroundIn to contain elements
+    local ElementsContainer = Instance.new('ScrollingFrame')
+    ElementsContainer.Name = "ElementsContainer"
+    ElementsContainer.Parent = BackgroundIn
+    ElementsContainer.BackgroundTransparency = 1
+    ElementsContainer.BorderSizePixel = 0
+    ElementsContainer.Size = UDim2.new(1, 0, 1, 0)
+    ElementsContainer.CanvasSize = UDim2.new(0, 0, 0, 0) -- Will adjust dynamically
+    ElementsContainer.ScrollBarThickness = 4
+    ElementsContainer.ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255)
+    ElementsContainer.ScrollBarImageTransparency = 0.7
+    ElementsContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y -- Auto adjusts canvas size
+    
+    -- Add UI layout for auto spacing elements
+    local UIListLayout = Instance.new('UIListLayout')
+    UIListLayout.Name = "UIListLayout"
+    UIListLayout.Parent = ElementsContainer
+    UIListLayout.Padding = UDim.new(0, 10)
+    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    
+    -- Add padding around the edges
+    local UIPadding = Instance.new('UIPadding')
+    UIPadding.Parent = ElementsContainer
+    UIPadding.PaddingTop = UDim.new(0, 10)
+    UIPadding.PaddingBottom = UDim.new(0, 10)
+    UIPadding.PaddingLeft = UDim.new(0, 5)
+    UIPadding.PaddingRight = UDim.new(0, 5)
+    
     local UICorner_3 = Instance.new('UICorner')
     UICorner_3.Name = "UICorner"
     UICorner_3.Parent = BackgroundIn
@@ -110,6 +143,33 @@ function FinnnHub:CreateWindow(config)
     Tabs.BorderSizePixel = 0
     Tabs.Position = UDim2.new(0.01, 0, 0.15, 0)
     Tabs.Size = UDim2.new(0, 100, 0, 247)
+    
+    -- Add ScrollingFrame for tabs to make them scrollable if there are many
+    local TabsContainer = Instance.new('ScrollingFrame')
+    TabsContainer.Name = "TabsContainer"
+    TabsContainer.Parent = Tabs
+    TabsContainer.BackgroundTransparency = 1
+    TabsContainer.BorderSizePixel = 0
+    TabsContainer.Size = UDim2.new(1, 0, 1, 0)
+    TabsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+    TabsContainer.ScrollBarThickness = 4
+    TabsContainer.ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255)
+    TabsContainer.ScrollBarImageTransparency = 0.7
+    TabsContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    
+    -- Layout for tabs
+    local TabsUIListLayout = Instance.new('UIListLayout')
+    TabsUIListLayout.Name = "UIListLayout"
+    TabsUIListLayout.Parent = TabsContainer
+    TabsUIListLayout.Padding = UDim.new(0, 5)
+    TabsUIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    TabsUIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    
+    -- Padding for tabs
+    local TabsUIPadding = Instance.new('UIPadding')
+    TabsUIPadding.Parent = TabsContainer
+    TabsUIPadding.PaddingTop = UDim.new(0, 5)
+    TabsUIPadding.PaddingBottom = UDim.new(0, 5)
     
     local UICorner_7 = Instance.new('UICorner')
     UICorner_7.Name = "UICorner"
@@ -151,12 +211,6 @@ function FinnnHub:CreateWindow(config)
             local tabsFadeTween = CreateTween(Tabs, {BackgroundTransparency = 0}, 0.5)
             tabsFadeTween:Play()
             
-            for _, child in pairs(BackgroundIn:GetChildren()) do
-                if child:IsA("Frame") or child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
-                    CreateTween(child, {BackgroundTransparency = child.BackgroundTransparency}, 0.5):Play()
-                end
-            end
-            
             Line.Visible = true
         else
             -- Minimize
@@ -172,12 +226,6 @@ function FinnnHub:CreateWindow(config)
             
             local tabsFadeTween = CreateTween(Tabs, {BackgroundTransparency = 1}, 0.3)
             tabsFadeTween:Play()
-            
-            for _, child in pairs(BackgroundIn:GetChildren()) do
-                if child:IsA("Frame") or child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
-                    CreateTween(child, {BackgroundTransparency = 1}, 0.3):Play()
-                end
-            end
             
             Line.Visible = false
         end
@@ -251,27 +299,48 @@ function FinnnHub:CreateWindow(config)
         -- Create tab button
         local Tab = Instance.new('TextButton')
         Tab.Name = "Tab" .. tabCounter
-        Tab.Parent = Tabs
+        Tab.Parent = TabsContainer
         Tab.Text = tabName
         Tab.TextColor3 = Color3.fromRGB(255, 255, 255)
         Tab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Tab.BackgroundTransparency = 0.85
         Tab.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Tab.BorderSizePixel = 0
-        Tab.Position = UDim2.new(0, 0, 0.089 * (tabCounter - 1), 0)
-        Tab.Size = UDim2.new(0, 100, 0, 22)
+        Tab.Size = UDim2.new(0, 90, 0, 25)
+        Tab.LayoutOrder = tabCounter
         
         local UICorner_Tab = Instance.new('UICorner')
         UICorner_Tab.Name = "UICorner"
         UICorner_Tab.Parent = Tab
         
         -- Create content container for this tab
-        local TabContent = Instance.new('Frame')
+        local TabContent = Instance.new('ScrollingFrame')
         TabContent.Name = "TabContent_" .. tabCounter
         TabContent.Parent = BackgroundIn
         TabContent.BackgroundTransparency = 1
         TabContent.Size = UDim2.new(1, 0, 1, 0)
+        TabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
+        TabContent.ScrollBarThickness = 4
+        TabContent.ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255)
+        TabContent.ScrollBarImageTransparency = 0.7
         TabContent.Visible = false
+        TabContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        
+        -- Add UI layout for elements in this tab
+        local TabUIListLayout = Instance.new('UIListLayout')
+        TabUIListLayout.Name = "UIListLayout"
+        TabUIListLayout.Parent = TabContent
+        TabUIListLayout.Padding = UDim.new(0, 10)
+        TabUIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        TabUIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        
+        -- Add padding
+        local TabUIPadding = Instance.new('UIPadding')
+        TabUIPadding.Parent = TabContent
+        TabUIPadding.PaddingTop = UDim.new(0, 10)
+        TabUIPadding.PaddingBottom = UDim.new(0, 10)
+        TabUIPadding.PaddingLeft = UDim.new(0, 5)
+        TabUIPadding.PaddingRight = UDim.new(0, 5)
         
         -- Store reference to tab content
         tabContents[tabCounter] = TabContent
@@ -290,7 +359,7 @@ function FinnnHub:CreateWindow(config)
             end
             
             -- Reset all tab buttons
-            for _, child in pairs(Tabs:GetChildren()) do
+            for _, child in pairs(TabsContainer:GetChildren()) do
                 if child:IsA("TextButton") then
                     CreateTween(child, {BackgroundTransparency = 0.85}, 0.3):Play()
                 end
@@ -305,10 +374,13 @@ function FinnnHub:CreateWindow(config)
         
         -- Tab content methods
         local TabObj = {}
+        local elementCounter = 0
         
         function TabObj:CreateText(text)
+            elementCounter = elementCounter + 1
+            
             local TextLabel = Instance.new('TextLabel')
-            TextLabel.Name = "ExampleText"
+            TextLabel.Name = "Text_" .. elementCounter
             TextLabel.Parent = TabContent
             TextLabel.TextScaled = true
             TextLabel.Text = text
@@ -317,8 +389,12 @@ function FinnnHub:CreateWindow(config)
             TextLabel.BackgroundTransparency = 0.9
             TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
             TextLabel.BorderSizePixel = 0
-            TextLabel.Position = UDim2.new(0, 0, 0.03 * (#TabContent:GetChildren() + 1), 0)
-            TextLabel.Size = UDim2.new(0, 380, 0, 22)
+            TextLabel.Size = UDim2.new(0.95, 0, 0, 22)
+            TextLabel.LayoutOrder = elementCounter
+            
+            local UICorner_Text = Instance.new('UICorner')
+            UICorner_Text.Name = "UICorner"
+            UICorner_Text.Parent = TextLabel
             
             -- Animation
             TextLabel.BackgroundTransparency = 1
@@ -329,19 +405,25 @@ function FinnnHub:CreateWindow(config)
         end
         
         function TabObj:CreateToggle(config)
+            elementCounter = elementCounter + 1
+            
             local toggleConfig = config or {}
             local toggleTitle = toggleConfig.Title or "Toggle Button"
             local toggleCallback = toggleConfig.Callback or function() end
             
             local ToggleButton = Instance.new('Frame')
-            ToggleButton.Name = "ToggleButton"
+            ToggleButton.Name = "Toggle_" .. elementCounter
             ToggleButton.Parent = TabContent
             ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             ToggleButton.BackgroundTransparency = 0.9
             ToggleButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
             ToggleButton.BorderSizePixel = 0
-            ToggleButton.Position = UDim2.new(0, 0, 0.125 * (#TabContent:GetChildren() + 1), 0)
-            ToggleButton.Size = UDim2.new(0, 380, 0, 30)
+            ToggleButton.Size = UDim2.new(0.95, 0, 0, 30)
+            ToggleButton.LayoutOrder = elementCounter
+            
+            local UICorner_Toggle = Instance.new('UICorner')
+            UICorner_Toggle.Name = "UICorner"
+            UICorner_Toggle.Parent = ToggleButton
             
             local ToggleButtonTitle = Instance.new('TextLabel')
             ToggleButtonTitle.Name = "ToggleButtonTitle"
@@ -352,8 +434,9 @@ function FinnnHub:CreateWindow(config)
             ToggleButtonTitle.BackgroundTransparency = 1
             ToggleButtonTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
             ToggleButtonTitle.BorderSizePixel = 0
-            ToggleButtonTitle.Position = UDim2.new(0.018421052023768425, 0, 0, 0)
-            ToggleButtonTitle.Size = UDim2.new(0, 193, 0, 30)
+            ToggleButtonTitle.Position = UDim2.new(0.02, 0, 0, 0)
+            ToggleButtonTitle.Size = UDim2.new(0.7, 0, 1, 0)
+            ToggleButtonTitle.TextXAlignment = Enum.TextXAlignment.Left
             
             local ToggleButtonSwitch = Instance.new('TextButton')
             ToggleButtonSwitch.Name = "ToggleButton"
@@ -363,12 +446,13 @@ function FinnnHub:CreateWindow(config)
             ToggleButtonSwitch.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             ToggleButtonSwitch.BorderColor3 = Color3.fromRGB(0, 0, 0)
             ToggleButtonSwitch.BorderSizePixel = 0
-            ToggleButtonSwitch.Position = UDim2.new(0.813, 0, 0.067, 0)
-            ToggleButtonSwitch.Size = UDim2.new(0, 50, 0, 25)
+            ToggleButtonSwitch.Position = UDim2.new(0.85, 0, 0.1, 0)
+            ToggleButtonSwitch.Size = UDim2.new(0, 50, 0, 24)
+            ToggleButtonSwitch.AnchorPoint = Vector2.new(0.5, 0)
             
-            local UICorner_Toggle = Instance.new('UICorner')
-            UICorner_Toggle.Name = "UICorner"
-            UICorner_Toggle.Parent = ToggleButtonSwitch
+            local UICorner_ToggleSwitch = Instance.new('UICorner')
+            UICorner_ToggleSwitch.Name = "UICorner"
+            UICorner_ToggleSwitch.Parent = ToggleButtonSwitch
             
             local Dot = Instance.new('Frame')
             Dot.Name = "Dot"
@@ -376,7 +460,7 @@ function FinnnHub:CreateWindow(config)
             Dot.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
             Dot.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Dot.BorderSizePixel = 0
-            Dot.Size = UDim2.new(0, 25, 0, 25)
+            Dot.Size = UDim2.new(0, 24, 0, 24)
             
             local UICorner_Dot = Instance.new('UICorner')
             UICorner_Dot.Name = "UICorner"
@@ -441,12 +525,14 @@ function FinnnHub:CreateWindow(config)
         end
         
         function TabObj:CreateButton(config)
+            elementCounter = elementCounter + 1
+            
             local buttonConfig = config or {}
             local buttonTitle = buttonConfig.Title or "Button"
             local buttonCallback = buttonConfig.Callback or function() end
             
             local Button = Instance.new('TextButton')
-            Button.Name = "TextButton"
+            Button.Name = "Button_" .. elementCounter
             Button.Parent = TabContent
             Button.Text = ""
             Button.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -454,8 +540,12 @@ function FinnnHub:CreateWindow(config)
             Button.BackgroundTransparency = 0.9
             Button.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Button.BorderSizePixel = 0
-            Button.Position = UDim2.new(0, 0, 0.125 * (#TabContent:GetChildren() + 1), 0)
-            Button.Size = UDim2.new(0, 380, 0, 30)
+            Button.Size = UDim2.new(0.95, 0, 0, 30)
+            Button.LayoutOrder = elementCounter
+            
+            local UICorner_Button = Instance.new('UICorner')
+            UICorner_Button.Name = "UICorner"
+            UICorner_Button.Parent = Button
             
             local ButtonTitle = Instance.new('TextLabel')
             ButtonTitle.Name = "ButtonTitle"
@@ -466,8 +556,9 @@ function FinnnHub:CreateWindow(config)
             ButtonTitle.BackgroundTransparency = 1
             ButtonTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
             ButtonTitle.BorderSizePixel = 0
-            ButtonTitle.Position = UDim2.new(0.018421052023768425, 0, 0, 0)
-            ButtonTitle.Size = UDim2.new(0, 193, 0, 30)
+            ButtonTitle.Position = UDim2.new(0.02, 0, 0, 0)
+            ButtonTitle.Size = UDim2.new(0.96, 0, 1, 0)
+            ButtonTitle.TextXAlignment = Enum.TextXAlignment.Center
             
             -- Animation
             Button.BackgroundTransparency = 1
@@ -505,19 +596,25 @@ function FinnnHub:CreateWindow(config)
         end
         
         function TabObj:CreateTextBox(config)
+            elementCounter = elementCounter + 1
+            
             local textBoxConfig = config or {}
             local textBoxTitle = textBoxConfig.Title or "Input Box"
             local textBoxCallback = textBoxConfig.Callback or function() end
             
             local Input_Box = Instance.new('Frame')
-            Input_Box.Name = "Input Box"
+            Input_Box.Name = "InputBox_" .. elementCounter
             Input_Box.Parent = TabContent
             Input_Box.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             Input_Box.BackgroundTransparency = 0.9
             Input_Box.BorderColor3 = Color3.fromRGB(0, 0, 0)
             Input_Box.BorderSizePixel = 0
-            Input_Box.Position = UDim2.new(0, 0, 0.125 * (#TabContent:GetChildren() + 1), 0)
-            Input_Box.Size = UDim2.new(0, 380, 0, 30)
+            Input_Box.Size = UDim2.new(0.95, 0, 0, 30)
+            Input_Box.LayoutOrder = elementCounter
+            
+            local UICorner_InputBox = Instance.new('UICorner')
+            UICorner_InputBox.Name = "UICorner"
+            UICorner_InputBox.Parent = Input_Box
             
             local InputTextTitle = Instance.new('TextLabel')
             InputTextTitle.Name = "InputTextTitle"
@@ -528,160 +625,596 @@ function FinnnHub:CreateWindow(config)
             InputTextTitle.BackgroundTransparency = 1
             InputTextTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
             InputTextTitle.BorderSizePixel = 0
-            InputTextTitle.Position = UDim2.new(0.018421052023768425, 0, -0.03333333507180214, 0)
-            InputTextTitle.Size = UDim2.new(0, 193, 0, 30)
-            
-            local TextBox = Instance.new('TextBox')
-            TextBox.Name = "TextBox"
-            TextBox.Parent = Input_Box
-            TextBox.Text = ""
-            TextBox.PlaceholderText = "Enter text here..."
-            TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-            TextBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-            TextBox.BackgroundTransparency = 0.5
-            TextBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-            TextBox.BorderSizePixel = 0
-            TextBox.Position = UDim2.new(0.237, 0, 0, 0)
-            TextBox.Size = UDim2.new(0, 277, 0, 29)
-            
-            local UICorner_TextBox = Instance.new('UICorner')
-            UICorner_TextBox.Name = "UICorner"
-            UICorner_TextBox.Parent = TextBox
-            
-            -- Animation
-            Input_Box.BackgroundTransparency = 1
-            InputTextTitle.TextTransparency = 1
-            TextBox.BackgroundTransparency = 1
-            TextBox.TextTransparency = 1
-            
-            CreateTween(Input_Box, {BackgroundTransparency = 0.9}, 0.5):Play()
-            CreateTween(InputTextTitle, {TextTransparency = 0}, 0.5):Play()
-            CreateTween(TextBox, {BackgroundTransparency = 0.5, TextTransparency = 0}, 0.5):Play()
-            
-            -- TextBox focus animations and callback
-            TextBox.Focused:Connect(function()
-                local focusTween = CreateTween(TextBox, {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}, 0.2)
-                focusTween:Play()
-            end)
-            
-            TextBox.FocusLost:Connect(function(enterPressed)
-                local unfocusTween = CreateTween(TextBox, {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}, 0.2)
-                unfocusTween:Play()
-                
-                if enterPressed then
-                    textBoxCallback(TextBox.Text)
-                end
-            end)
-            
-            return TextBox
-        end
+            InputTextTitle.Position = UDim2.new(0.02, 0, 0, 0)
+            InputTextTitle.Position = UDim2.new(0.02, 0, 0, 0)
+InputTextTitle.Size = UDim2.new(0.4, 0, 1, 0)
+InputTextTitle.TextXAlignment = Enum.TextXAlignment.Left
+
+local InputBox = Instance.new('TextBox')
+InputBox.Name = "TextBox"
+InputBox.Parent = Input_Box
+InputBox.Text = ""
+InputBox.PlaceholderText = "Enter text..."
+InputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+InputBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+InputBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+InputBox.BorderSizePixel = 0
+InputBox.Position = UDim2.new(0.45, 0, 0.15, 0)
+InputBox.Size = UDim2.new(0.53, 0, 0.7, 0)
+InputBox.ClearTextOnFocus = false
+
+local UICorner_TextBox = Instance.new('UICorner')
+UICorner_TextBox.Name = "UICorner"
+UICorner_TextBox.Parent = InputBox
+
+-- Animation
+Input_Box.BackgroundTransparency = 1
+InputTextTitle.TextTransparency = 1
+InputBox.BackgroundTransparency = 1
+InputBox.TextTransparency = 1
+
+CreateTween(Input_Box, {BackgroundTransparency = 0.9}, 0.5):Play()
+CreateTween(InputTextTitle, {TextTransparency = 0}, 0.5):Play()
+CreateTween(InputBox, {BackgroundTransparency = 0.2, TextTransparency = 0}, 0.5):Play()
+
+-- TextBox functionality
+InputBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        textBoxCallback(InputBox.Text)
+    end
+end)
+
+local TextBoxObj = {
+    Instance = Input_Box,
+    TextBox = InputBox,
+    GetText = function(self)
+        return InputBox.Text
+    end,
+    SetText = function(self, text)
+        InputBox.Text = text
+    end
+}
+
+return TextBoxObj
+end
+
+function TabObj:CreateSlider(config)
+    elementCounter = elementCounter + 1
+    
+    local sliderConfig = config or {}
+    local sliderTitle = sliderConfig.Title or "Slider"
+    local minValue = sliderConfig.Min or 0
+    local maxValue = sliderConfig.Max or 100
+    local defaultValue = sliderConfig.Default or minValue
+    local sliderCallback = sliderConfig.Callback or function() end
+    
+    -- Ensure default is within bounds
+    defaultValue = math.clamp(defaultValue, minValue, maxValue)
+    
+    local SliderFrame = Instance.new('Frame')
+    SliderFrame.Name = "Slider_" .. elementCounter
+    SliderFrame.Parent = TabContent
+    SliderFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    SliderFrame.BackgroundTransparency = 0.9
+    SliderFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SliderFrame.BorderSizePixel = 0
+    SliderFrame.Size = UDim2.new(0.95, 0, 0, 45)
+    SliderFrame.LayoutOrder = elementCounter
+    
+    local UICorner_Slider = Instance.new('UICorner')
+    UICorner_Slider.Name = "UICorner"
+    UICorner_Slider.Parent = SliderFrame
+    
+    local SliderTitle = Instance.new('TextLabel')
+    SliderTitle.Name = "SliderTitle"
+    SliderTitle.Parent = SliderFrame
+    SliderTitle.Text = sliderTitle
+    SliderTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SliderTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    SliderTitle.BackgroundTransparency = 1
+    SliderTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SliderTitle.BorderSizePixel = 0
+    SliderTitle.Position = UDim2.new(0.02, 0, 0, 0)
+    SliderTitle.Size = UDim2.new(0.96, 0, 0, 20)
+    SliderTitle.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local SliderBar = Instance.new('Frame')
+    SliderBar.Name = "SliderBar"
+    SliderBar.Parent = SliderFrame
+    SliderBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    SliderBar.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SliderBar.BorderSizePixel = 0
+    SliderBar.Position = UDim2.new(0.05, 0, 0.6, 0)
+    SliderBar.Size = UDim2.new(0.9, 0, 0, 5)
+    
+    local UICorner_SliderBar = Instance.new('UICorner')
+    UICorner_SliderBar.Name = "UICorner"
+    UICorner_SliderBar.Parent = SliderBar
+    
+    local SliderFill = Instance.new('Frame')
+    SliderFill.Name = "SliderFill"
+    SliderFill.Parent = SliderBar
+    SliderFill.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+    SliderFill.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SliderFill.BorderSizePixel = 0
+    SliderFill.Size = UDim2.new(0, 0, 1, 0)
+    
+    local UICorner_SliderFill = Instance.new('UICorner')
+    UICorner_SliderFill.Name = "UICorner"
+    UICorner_SliderFill.Parent = SliderFill
+    
+    local SliderKnob = Instance.new('Frame')
+    SliderKnob.Name = "SliderKnob"
+    SliderKnob.Parent = SliderBar
+    SliderKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    SliderKnob.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    SliderKnob.BorderSizePixel = 0
+    SliderKnob.Position = UDim2.new(0, -6, 0.5, -6)
+    SliderKnob.Size = UDim2.new(0, 12, 0, 12)
+    SliderKnob.AnchorPoint = Vector2.new(0, 0.5)
+    
+    local UICorner_SliderKnob = Instance.new('UICorner')
+    UICorner_SliderKnob.Name = "UICorner"
+    UICorner_SliderKnob.CornerRadius = UDim.new(1, 0)
+    UICorner_SliderKnob.Parent = SliderKnob
+    
+    local ValueLabel = Instance.new('TextLabel')
+    ValueLabel.Name = "ValueLabel"
+    ValueLabel.Parent = SliderFrame
+    ValueLabel.Text = tostring(defaultValue)
+    ValueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ValueLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ValueLabel.BackgroundTransparency = 1
+    ValueLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    ValueLabel.BorderSizePixel = 0
+    ValueLabel.Position = UDim2.new(0.9, 0, 0, 0)
+    ValueLabel.Size = UDim2.new(0.1, 0, 0, 20)
+    ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+    
+    -- Animation
+    SliderFrame.BackgroundTransparency = 1
+    SliderTitle.TextTransparency = 1
+    SliderBar.BackgroundTransparency = 1
+    SliderFill.BackgroundTransparency = 1
+    SliderKnob.BackgroundTransparency = 1
+    ValueLabel.TextTransparency = 1
+    
+    CreateTween(SliderFrame, {BackgroundTransparency = 0.9}, 0.5):Play()
+    CreateTween(SliderTitle, {TextTransparency = 0}, 0.5):Play()
+    CreateTween(SliderBar, {BackgroundTransparency = 0}, 0.5):Play()
+    CreateTween(SliderFill, {BackgroundTransparency = 0}, 0.5):Play()
+    CreateTween(SliderKnob, {BackgroundTransparency = 0}, 0.5):Play()
+    CreateTween(ValueLabel, {TextTransparency = 0}, 0.5):Play()
+    
+    -- Set default value
+    local function updateSlider(value)
+        local percent = (value - minValue) / (maxValue - minValue)
+        percent = math.clamp(percent, 0, 1)
         
-        return TabObj
+        -- Update fill and knob position
+        SliderFill.Size = UDim2.new(percent, 0, 1, 0)
+        SliderKnob.Position = UDim2.new(percent, -6, 0.5, -6)
+        
+        -- Update value label
+        ValueLabel.Text = tostring(math.floor(value))
+        
+        -- Call callback
+        sliderCallback(value)
     end
     
-    return WindowObj
+    -- Initialize with default value
+    updateSlider(defaultValue)
+    
+    -- Slider interaction
+    local isDragging = false
+    
+    SliderBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = true
+            
+            -- Calculate value based on mouse position
+            local mousePos = input.Position.X
+            local sliderPos = SliderBar.AbsolutePosition.X
+            local sliderWidth = SliderBar.AbsoluteSize.X
+            local relativePos = mousePos - sliderPos
+            local percent = math.clamp(relativePos / sliderWidth, 0, 1)
+            local value = minValue + (maxValue - minValue) * percent
+            
+            updateSlider(value)
+        end
+    end)
+    
+    SliderKnob.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = true
+        end
+    end)
+    
+    game:GetService("UserInputService").InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isDragging = false
+        end
+    end)
+    
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            -- Calculate value based on mouse position
+            local mousePos = input.Position.X
+            local sliderPos = SliderBar.AbsolutePosition.X
+            local sliderWidth = SliderBar.AbsoluteSize.X
+            local relativePos = mousePos - sliderPos
+            local percent = math.clamp(relativePos / sliderWidth, 0, 1)
+            local value = minValue + (maxValue - minValue) * percent
+            
+            updateSlider(value)
+        end
+    end)
+    
+    local SliderObj = {
+        Instance = SliderFrame,
+        Value = defaultValue,
+        SetValue = function(self, value)
+            local clampedValue = math.clamp(value, minValue, maxValue)
+            updateSlider(clampedValue)
+            self.Value = clampedValue
+        end,
+        GetValue = function(self)
+            return tonumber(ValueLabel.Text)
+        end
+    }
+    
+    return SliderObj
+end
+
+function TabObj:CreateDropdown(config)
+    elementCounter = elementCounter + 1
+    
+    local dropdownConfig = config or {}
+    local dropdownTitle = dropdownConfig.Title or "Dropdown"
+    local dropdownOptions = dropdownConfig.Options or {"Option 1", "Option 2"}
+    local defaultOption = dropdownConfig.Default or dropdownOptions[1]
+    local dropdownCallback = dropdownConfig.Callback or function() end
+    
+    local DropdownFrame = Instance.new('Frame')
+    DropdownFrame.Name = "Dropdown_" .. elementCounter
+    DropdownFrame.Parent = TabContent
+    DropdownFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    DropdownFrame.BackgroundTransparency = 0.9
+    DropdownFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    DropdownFrame.BorderSizePixel = 0
+    DropdownFrame.Size = UDim2.new(0.95, 0, 0, 30)
+    DropdownFrame.LayoutOrder = elementCounter
+    DropdownFrame.ClipsDescendants = true -- Important for dropdown animation
+    
+    local UICorner_Dropdown = Instance.new('UICorner')
+    UICorner_Dropdown.Name = "UICorner"
+    UICorner_Dropdown.Parent = DropdownFrame
+    
+    local DropdownTitle = Instance.new('TextLabel')
+    DropdownTitle.Name = "DropdownTitle"
+    DropdownTitle.Parent = DropdownFrame
+    DropdownTitle.Text = dropdownTitle
+    DropdownTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    DropdownTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    DropdownTitle.BackgroundTransparency = 1
+    DropdownTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    DropdownTitle.BorderSizePixel = 0
+    DropdownTitle.Position = UDim2.new(0.02, 0, 0, 0)
+    DropdownTitle.Size = UDim2.new(0.4, 0, 1, 0)
+    DropdownTitle.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local DropdownButton = Instance.new('TextButton')
+    DropdownButton.Name = "DropdownButton"
+    DropdownButton.Parent = DropdownFrame
+    DropdownButton.Text = defaultOption
+    DropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    DropdownButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    DropdownButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    DropdownButton.BorderSizePixel = 0
+    DropdownButton.Position = UDim2.new(0.45, 0, 0.15, 0)
+    DropdownButton.Size = UDim2.new(0.53, 0, 0.7, 0)
+    
+    local UICorner_Button = Instance.new('UICorner')
+    UICorner_Button.Name = "UICorner"
+    UICorner_Button.Parent = DropdownButton
+    
+    local DropdownArrow = Instance.new('TextLabel')
+    DropdownArrow.Name = "DropdownArrow"
+    DropdownArrow.Parent = DropdownButton
+    DropdownArrow.Text = "▼"
+    DropdownArrow.TextColor3 = Color3.fromRGB(255, 255, 255)
+    DropdownArrow.BackgroundTransparency = 1
+    DropdownArrow.Position = UDim2.new(0.92, 0, 0, 0)
+    DropdownArrow.Size = UDim2.new(0, 20, 1, 0)
+    
+    local OptionsFrame = Instance.new('Frame')
+    OptionsFrame.Name = "OptionsFrame"
+    OptionsFrame.Parent = DropdownFrame
+    OptionsFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    OptionsFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    OptionsFrame.BorderSizePixel = 0
+    OptionsFrame.Position = UDim2.new(0.45, 0, 0.85, 0)
+    OptionsFrame.Size = UDim2.new(0.53, 0, 0, 0) -- Start with height 0
+    OptionsFrame.Visible = false
+    OptionsFrame.ZIndex = 2
+    
+    local UICorner_Options = Instance.new('UICorner')
+    UICorner_Options.Name = "UICorner"
+    UICorner_Options.Parent = OptionsFrame
+    
+    -- Animation
+    DropdownFrame.BackgroundTransparency = 1
+    DropdownTitle.TextTransparency = 1
+    DropdownButton.BackgroundTransparency = 1
+    DropdownButton.TextTransparency = 1
+    DropdownArrow.TextTransparency = 1
+    
+    CreateTween(DropdownFrame, {BackgroundTransparency = 0.9}, 0.5):Play()
+    CreateTween(DropdownTitle, {TextTransparency = 0}, 0.5):Play()
+    CreateTween(DropdownButton, {BackgroundTransparency = 0.2, TextTransparency = 0}, 0.5):Play()
+    CreateTween(DropdownArrow, {TextTransparency = 0}, 0.5):Play()
+    
+    -- Create option buttons
+    local function createOptions()
+        -- Clear existing options
+        for _, child in pairs(OptionsFrame:GetChildren()) do
+            if child:IsA("TextButton") then
+                child:Destroy()
+            end
+        end
+        
+        -- Calculate height based on number of options
+        local optionHeight = 25
+        local totalHeight = #dropdownOptions * optionHeight
+        
+        -- Create option buttons
+        for i, option in ipairs(dropdownOptions) do
+            local OptionButton = Instance.new('TextButton')
+            OptionButton.Name = "Option_" .. i
+            OptionButton.Parent = OptionsFrame
+            OptionButton.Text = option
+            OptionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            OptionButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            OptionButton.BackgroundTransparency = 0.2
+            OptionButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+            OptionButton.BorderSizePixel = 0
+            OptionButton.Position = UDim2.new(0, 0, 0, (i-1) * optionHeight)
+            OptionButton.Size = UDim2.new(1, 0, 0, optionHeight)
+            OptionButton.ZIndex = 3
+            OptionButton.TextXAlignment = Enum.TextXAlignment.Center
+            
+            -- Option hover effect
+            OptionButton.MouseEnter:Connect(function()
+                CreateTween(OptionButton, {BackgroundTransparency = 0}, 0.2):Play()
+            end)
+            
+            OptionButton.MouseLeave:Connect(function()
+                CreateTween(OptionButton, {BackgroundTransparency = 0.2}, 0.2):Play()
+            end)
+            
+            -- Option selection
+            OptionButton.MouseButton1Click:Connect(function()
+                DropdownButton.Text = option
+                dropdownCallback(option)
+                
+                -- Close dropdown
+                local closeTween = CreateTween(OptionsFrame, {Size = UDim2.new(0.53, 0, 0, 0)}, 0.3)
+                closeTween:Play()
+                
+                closeTween.Completed:Connect(function()
+                    OptionsFrame.Visible = false
+                    DropdownFrame.Size = UDim2.new(0.95, 0, 0, 30) -- Reset container size
+                    DropdownArrow.Text = "▼" -- Reset arrow
+                end)
+            end)
+            
+            -- Round corners of the first and last options
+            if i == 1 or i == #dropdownOptions then
+                local UICorner_Option = Instance.new('UICorner')
+                UICorner_Option.Name = "UICorner"
+                UICorner_Option.Parent = OptionButton
+                
+                -- Only round top corners for first option
+                if i == 1 then
+                    UICorner_Option.CornerRadius = UDim.new(0, 5)
+                end
+                
+                -- Only round bottom corners for last option
+                if i == #dropdownOptions then
+                    UICorner_Option.CornerRadius = UDim.new(0, 5)
+                end
+            end
+        end
+        
+        return totalHeight
+    end
+    
+    -- Dropdown toggle
+    local isOpen = false
+    
+    DropdownButton.MouseButton1Click:Connect(function()
+        if isOpen then
+            -- Close dropdown
+            local closeTween = CreateTween(OptionsFrame, {Size = UDim2.new(0.53, 0, 0, 0)}, 0.3)
+            closeTween:Play()
+            
+            CreateTween(DropdownFrame, {Size = UDim2.new(0.95, 0, 0, 30)}, 0.3):Play()
+            DropdownArrow.Text = "▼"
+            
+            closeTween.Completed:Connect(function()
+                OptionsFrame.Visible = false
+            end)
+        else
+            -- Open dropdown
+            local optionsHeight = createOptions()
+            OptionsFrame.Visible = true
+            
+            local openTween = CreateTween(OptionsFrame, {Size = UDim2.new(0.53, 0, 0, optionsHeight)}, 0.3)
+            openTween:Play()
+            
+            -- Expand container to fit dropdown
+            local expandTween = CreateTween(DropdownFrame, {Size = UDim2.new(0.95, 0, 0, 30 + optionsHeight + 5)}, 0.3)
+            expandTween:Play()
+            
+            DropdownArrow.Text = "▲"
+        end
+        
+        isOpen = not isOpen
+    end)
+    
+    local DropdownObj = {
+        Instance = DropdownFrame,
+        Value = defaultOption,
+        SetOption = function(self, option)
+            if table.find(dropdownOptions, option) then
+                DropdownButton.Text = option
+                self.Value = option
+                dropdownCallback(option)
+            end
+        end,
+        GetOption = function(self)
+            return DropdownButton.Text
+        end,
+        SetOptions = function(self, newOptions)
+            dropdownOptions = newOptions
+            if not table.find(newOptions, DropdownButton.Text) and #newOptions > 0 then
+                DropdownButton.Text = newOptions[1]
+                self.Value = newOptions[1]
+                dropdownCallback(newOptions[1])
+            end
+        end
+    }
+    
+    return DropdownObj
+end
+
+return TabObj
+end
+
+return WindowObj
 end
 
 -- Notification System
-function FinnnHub:Notify(config)
+function FinnnHub:CreateNotification(config)
     config = config or {}
-    local notifyTitle = config.Title or "Notify"
-    local notifyContent = config.Content or "Content"
-    local notifyDuration = config.Duration or 3
+    local title = config.Title or "Notification"
+    local content = config.Content or ""
+    local duration = config.Duration or 5
     
-    -- Create Notification UI
-    local Notify = Instance.new('ScreenGui')
-    Notify.Name = "Notify"
-    Notify.Parent = game.Players.LocalPlayer.PlayerGui
+    -- Create notification GUI
+    local NotificationGui = Instance.new('ScreenGui')
+    NotificationGui.Name = "NotificationGui_" .. tostring(#ActiveNotifications + 1)
+    NotificationGui.Parent = game.Players.LocalPlayer.PlayerGui
     
-    local Notify_1 = Instance.new('Frame')
-    Notify_1.Name = "Notify"
-    Notify_1.Parent = Notify
-    Notify_1.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    Notify_1.BackgroundTransparency = 0.2
-    Notify_1.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    Notify_1.BorderSizePixel = 0
-    Notify_1.Position = UDim2.new(1.1, 0, 0.859, 0)  -- Start offscreen
-    Notify_1.Size = UDim2.new(0, 300, 0, 100)
+    local NotificationFrame = Instance.new('Frame')
+    NotificationFrame.Name = "NotificationFrame"
+    NotificationFrame.Parent = NotificationGui
+    NotificationFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    NotificationFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    NotificationFrame.BorderSizePixel = 0
+    NotificationFrame.Position = UDim2.new(1, 10, 0.8, 0) -- Start off-screen
+    NotificationFrame.Size = UDim2.new(0, 250, 0, 80)
+    NotificationFrame.AnchorPoint = Vector2.new(0, 1)
     
     local UICorner = Instance.new('UICorner')
-    UICorner.Name = "UICorner"
-    UICorner.Parent = Notify_1
+    UICorner.Parent = NotificationFrame
     
-    local TitleNotify = Instance.new('TextLabel')
-    TitleNotify.Name = "TitleNotify"
-    TitleNotify.Parent = Notify_1
-    TitleNotify.Text = notifyTitle
-    TitleNotify.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TitleNotify.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    TitleNotify.BackgroundTransparency = 1
-    TitleNotify.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    TitleNotify.BorderSizePixel = 0
-    TitleNotify.Position = UDim2.new(0.014, 0, 0, 0)
-    TitleNotify.Size = UDim2.new(0, 295, 0, 28)
-    TitleNotify.Font = Enum.Font.SourceSansBold
-    TitleNotify.TextSize = 20
+    local NotifTitle = Instance.new('TextLabel')
+    NotifTitle.Name = "Title"
+    NotifTitle.Parent = NotificationFrame
+    NotifTitle.BackgroundTransparency = 1
+    NotifTitle.Size = UDim2.new(1, -10, 0, 25)
+    NotifTitle.Position = UDim2.new(0, 5, 0, 5)
+    NotifTitle.Font = Enum.Font.SourceSansBold
+    NotifTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    NotifTitle.TextSize = 18
+    NotifTitle.Text = title
+    NotifTitle.TextXAlignment = Enum.TextXAlignment.Left
     
-    local ContentNotify = Instance.new('TextLabel')
-    ContentNotify.Name = "ContentNotify"
-    ContentNotify.Parent = Notify
-    ContentNotify.Text = notifyContent
-    ContentNotify.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ContentNotify.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    ContentNotify.BackgroundTransparency = 1
-    ContentNotify.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    ContentNotify.BorderSizePixel = 0
-    ContentNotify.Position = UDim2.new(0.014, 0, 0.28, 0)
-    ContentNotify.Size = UDim2.new(0, 295, 0, 61)
-    ContentNotify.Font = Enum.Font.SourceSans
-    ContentNotify.TextSize = 16
-    ContentNotify.TextWrapped = true
+    local ContentText = Instance.new('TextLabel')
+    ContentText.Name = "Content"
+    ContentText.Parent = NotificationFrame
+    ContentText.BackgroundTransparency = 1
+    ContentText.Size = UDim2.new(1, -10, 1, -35)
+    ContentText.Position = UDim2.new(0, 5, 0, 30)
+    ContentText.Font = Enum.Font.SourceSans
+    ContentText.TextColor3 = Color3.fromRGB(200, 200, 200)
+    ContentText.TextSize = 16
+    ContentText.Text = content
+    ContentText.TextWrapped = true
+    ContentText.TextXAlignment = Enum.TextXAlignment.Left
+    ContentText.TextYAlignment = Enum.TextYAlignment.Top
     
-    -- Animation for notification
-    -- Slide in animation
-    local slideInTween = CreateTween(Notify_1, {
-        Position = UDim2.new(0.834, 0, 0.859, 0)
-    }, 0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    local CloseButton = Instance.new('TextButton')
+    CloseButton.Name = "CloseButton"
+    CloseButton.Parent = NotificationFrame
+    CloseButton.BackgroundTransparency = 1
+    CloseButton.Size = UDim2.new(0, 20, 0, 20)
+    CloseButton.Position = UDim2.new(1, -25, 0, 5)
+    CloseButton.Font = Enum.Font.SourceSansBold
+    CloseButton.TextColor3 = Color3.fromRGB(255, 100, 100)
+    CloseButton.TextSize = 18
+    CloseButton.Text = "X"
     
-    -- Slide out animation
-    local slideOutTween = CreateTween(Notify_1, {
-        Position = UDim2.new(1.1, 0, 0.859, 0)
-    }, 0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+    -- Position notification based on active notifications
+    local position = #ActiveNotifications * (NotificationFrame.Size.Y.Offset + NotificationPadding)
     
-    -- Fade in animation
-    TitleNotify.TextTransparency = 1
-    ContentNotify.TextTransparency = 1
+    -- Add to active notifications
+    table.insert(ActiveNotifications, NotificationGui)
     
-    local fadeInTitle = CreateTween(TitleNotify, {TextTransparency = 0}, 0.5)
-    local fadeInContent = CreateTween(ContentNotify, {TextTransparency = 0}, 0.5)
+    -- Show notification with animation
+    local showTween = CreateTween(NotificationFrame, {
+        Position = UDim2.new(0.99, -10, 0.95, -position)
+    }, 0.5, Enum.EasingStyle.Back)
     
-    -- Play animations
-    slideInTween:Play()
-    wait(0.2)
-    fadeInTitle:Play()
-    fadeInContent:Play()
+    showTween:Play()
     
-    -- Wait for duration and then remove
-    task.spawn(function()
-        wait(notifyDuration)
+    -- Close button functionality
+    local function closeNotification()
+        -- Remove from active notifications
+        for i, notif in ipairs(ActiveNotifications) do
+            if notif == NotificationGui then
+                table.remove(ActiveNotifications, i)
+                break
+            end
+        end
         
-        -- Fade out text first
-        local fadeOutTitle = CreateTween(TitleNotify, {TextTransparency = 1}, 0.3)
-        local fadeOutContent = CreateTween(ContentNotify, {TextTransparency = 1}, 0.3)
+        -- Update positions of remaining notifications
+        for i, notif in ipairs(ActiveNotifications) do
+            local newPos = (i - 1) * (NotificationFrame.Size.Y.Offset + NotificationPadding)
+            local repositionTween = CreateTween(notif.NotificationFrame, {
+                Position = UDim2.new(0.99, -10, 0.95, -newPos)
+            }, 0.3)
+            repositionTween:Play()
+        end
         
-        fadeOutTitle:Play()
-        fadeOutContent:Play()
-        wait(0.3)
+        -- Close animation
+        local closeTween = CreateTween(NotificationFrame, {
+            Position = UDim2.new(1.1, 0, NotificationFrame.Position.Y.Scale, NotificationFrame.Position.Y.Offset),
+            BackgroundTransparency = 1
+        }, 0.5)
         
-        -- Then slide out
-        slideOutTween:Play()
-        slideOutTween.Completed:Wait()
+        closeTween:Play()
         
-        -- Destroy the notification
-        Notify:Destroy()
-    end)
+        -- Wait for animation then destroy
+        closeTween.Completed:Wait()
+        NotificationGui:Destroy()
+    end
     
-    return Notify_1
+    CloseButton.MouseButton1Click:Connect(closeNotification)
+    
+    -- Auto close after duration
+    if duration and duration > 0 then
+        spawn(function()
+            wait(duration)
+            if NotificationGui and NotificationGui.Parent then
+                closeNotification()
+            end
+        end)
+    end
+    
+    return NotificationGui
 end
 
+-- Return the library
 return FinnnHub
